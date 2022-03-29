@@ -8,12 +8,14 @@ from datetime import datetime
 import os 
 from datetime import datetime
 
+
 # import yapapi modules
 from yapapi import Golem, Task, WorkContext, Executor
 from yapapi.events import CommandExecuted
 from yapapi.log import enable_default_logger
 from yapapi.payload import vm
 from yapapi.rest.activity import CommandExecutionError
+
 
 # import provider modules 
 from provider import load_conf, makeOutFolder
@@ -29,7 +31,7 @@ TEXT_COLOR_WHITE =      "\033[37;1m"
 TEXT_COLOR_DEFAULT =    "\033[0m"
 
 # yapapi parameters
-PROJECT_PATH=os.getcwd()
+PROJECT_PATH=os.path.join('/home/pietro/repos/DeRL_Golem/src/')
 
 async def main(conf_yapapi, conf_RL, folder_tree):
     package = await vm.repo(
@@ -82,9 +84,10 @@ async def worker(context: WorkContext, tasks: AsyncIterable[Task]):
 
         s = context.new_script(timeout=timedelta(minutes=conf_yapapi['timeout']))
         
-        s.upload_file("client_stable_baselines3.py", os.path.join(folder_tree['prov_src_dir'], "client_stable_baselines3.py"))              # upload client script
+        s.upload_file(os.path.join(PROJECT_PATH, "client_stable_baselines3.py"), os.path.join(folder_tree['prov_src_dir'], "client_stable_baselines3.py"))              # upload client script
         s.run("/bin/sh", "-c", "python3 " + os.path.join(folder_tree['prov_src_dir'], "client_stable_baselines3.py"))               # run client computation        
         s.download_file(os.path.join(folder_tree['prov_out_dir'], "model_out.zip"), os.path.join(folder_tree['req_models_dir'], f'model_episode_{episode}_worker_{worker_id}.zip')) # dowload output
+        s.download_file(os.path.join(folder_tree['prov_out_dir'], "tensorboard.zip"), os.path.join(folder_tree['req_logs_dir'], f'tensorboard_episode_{episode}_worker_{worker_id}.zip')) # dowload output
         #s.run("/bin/bash", "-c", 'sleep 30') # sleeping simulates the computation
         yield s
         

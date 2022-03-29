@@ -1,4 +1,7 @@
 {   
+    "alg": {
+        "alg": "PPO"
+    },
     "model": {
         "policy":               "MlpPolicy",
         "env":                  "CartPole-v1",
@@ -23,5 +26,16 @@
         "seed":                 "None",   
         "device":               "auto", 
         "_init_setup_model":    "True"
+    },
+    "training": {
+        "total_timesteps":      10000,
+        "callback":             "None",
+        "log_interval":         1,
+        "eval_env":             "None",
+        "eval_freq":            -1,
+        "n_eval_episodes":      1,
+        "tb_log_name":          "PPO",
+        "eval_log_path":        "None",
+        "reset_num_timesteps":  "True"
     }
 }

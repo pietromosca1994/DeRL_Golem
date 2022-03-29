@@ -11,12 +11,12 @@ def load_conf(path):
 
 def makeOutFolder(path):
     timestamp=datetime.datetime.now().strftime("%Y-%m-%dT%H_%M")
-    folder_tree={   "req_logs_dir":     os.path.join(path, 'training', str(timestamp), 'logs'),
-                    "req_models_dir":   os.path.join(path, 'training', str(timestamp), 'models'),
-                    "req_conf_dir":     os.path.join(path, 'training', str(timestamp), 'conf'),
-                    "prov_in_dir":      os.path.join("/golem/input/"),
-                    "prov_out_dir":     os.path.join("/golem/output/"),
-                    "prov_src_dir":     os.path.join("/golem/src/")}                      
+    folder_tree={   "req_logs_dir":     os.path.join(path, 'training', str(timestamp), 'logs'),         # requestor logs dir 
+                    "req_models_dir":   os.path.join(path, 'training', str(timestamp), 'models'),       # requestor models directory
+                    "req_conf_dir":     os.path.join(path, 'training', str(timestamp), 'conf'),         # requestor cofiguration directory
+                    "prov_in_dir":      os.path.join("/golem/input/"),                                  # provider input directory
+                    "prov_out_dir":     os.path.join("/golem/output/"),                                 # provider output directory
+                    "prov_src_dir":     os.path.join("/golem/src/")}                                    # provider source directory   
 
     # create folder 
     os.makedirs(folder_tree["req_logs_dir"], exist_ok=True)

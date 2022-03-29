@@ -1,11 +1,11 @@
 {
     "subnet_tag":       "devnet-beta",
-    "image_hash":       "a6a69f76680b2204540b4bdd5161b240a44387d1476f3fb68d10a8fc",
+    "image_hash":       "03bb1cf31b86871c1c2173be6b958ed166f97d3bc70df70057681a7c",
     "app_key":          "ccd959c719e74cb88cc40061367a6061",
-    "min_mem_gib":      0.5,  
     "min_storage_gib":  2,
+    "min_mem_gib":      2,
     "max_workers":      3,
     "episodes":         1,
-    "timeout":          30,
+    "timeout":          120,
     "budget":           10
 }

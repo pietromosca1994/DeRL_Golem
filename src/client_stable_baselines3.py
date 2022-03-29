@@ -3,15 +3,18 @@ from stable_baselines3 import PPO
 import torch as th
 import json
 import os
+from stable_baselines3.common.env_util import make_vec_env
+import shutil
 
-env='CartPole-v1'
+env=make_vec_env('LunarLander-v2', n_envs=1)
+env.reset()
 policy='MlpPolicy'
 # Custom actor (pi) and value function (vf) networks
 # of two layers of size 32 each with Relu activation function
 policy_kwargs = dict(activation_fn=th.nn.ReLU,
                      net_arch=[dict(pi=[32, 32], vf=[32, 32])])
 
-total_timesteps=25000
+total_timesteps=1000000
 
 INPUT_VOLUME='/golem/input/'
 OUTPUT_VOLUME='/golem/output/'
@@ -71,8 +74,8 @@ def init_model(policy, env, *args, **kwargs):
                 env=                    env,                                
                 learning_rate=          3e-4,          
                 n_steps=                2048,                                   
-                batch_size=             64,                                   
-                n_epochs=               1,                                    
+                batch_size=             32,                                   
+                n_epochs=               32,                                    
                 gamma=                  0.99,                                    
                 gae_lambda=             0.95,                              
                 clip_range=             0.2,               
@@ -83,7 +86,7 @@ def init_model(policy, env, *args, **kwargs):
                 use_sde=                False,                                 
                 sde_sample_freq=        -1,                              
                 target_kl=              None,                      
-                tensorboard_log=        None,               
+                tensorboard_log=        os.path.join(OUTPUT_VOLUME, 'tensorboard/'),               
                 create_eval_env=        False,                         
                 policy_kwargs=          policy_kwargs,         
                 verbose=                1,                                       
@@ -107,7 +110,7 @@ def train_model(model, total_timesteps):
                 log_interval=           1,
                 eval_env=               None,
                 eval_freq=              -1,
-                n_eval_episodes=        5,
+                n_eval_episodes=        1,
                 tb_log_name=            "PPO",
                 eval_log_path=          None,
                 reset_num_timesteps=    True)
@@ -125,7 +128,17 @@ def save_model(model, path):
         print('[ERROR] Failed to save model')
     return None
 
+def remFolderContent(path):
+    for root, dirs, files in os.walk(path):
+        for f in files:
+            os.unlink(os.path.join(root, f))
+        for d in dirs:
+            shutil.rmtree(os.path.join(root, d))
+
 if __name__ == "__main__":
+    # remove output folder content
+    remFolderContent(OUTPUT_VOLUME)
+
     # get model configurations 
     #conf_model=conf_parser('./conf_model.json')
 
@@ -133,6 +146,9 @@ if __name__ == "__main__":
     #model=init_model(kwargs)
     model=train_model(model, total_timesteps)
     model=save_model(model, os.path.join(OUTPUT_VOLUME, 'model_out.zip'))
+    shutil.make_archive(os.path.join(OUTPUT_VOLUME, 'tensorboard'), 'zip', os.path.join(OUTPUT_VOLUME, 'tensorboard/'))
 
+    # remove input volume content
+    remFolderContent(INPUT_VOLUME)
 
 
