@@ -7,7 +7,7 @@ from typing import AsyncIterable
 from datetime import datetime
 import os 
 from datetime import datetime
-
+from utils import evalAgent, getFederatedModel
 
 # import yapapi modules
 from yapapi import Golem, Task, WorkContext, Executor
@@ -64,8 +64,16 @@ async def main(conf_yapapi, conf_RL, folder_tree):
                                     payload=package,
                                     max_workers=conf_yapapi['max_workers'],
                                     timeout=timedelta(minutes=conf_yapapi['timeout'])):
-                
-                print(f"{TEXT_COLOR_CYAN}" f"[INFO] Completed" f"{TEXT_COLOR_DEFAULT}")
+                                    done=1
+            
+            print(f"{TEXT_COLOR_CYAN}" f"[INFO] Generating Federated Agent for episode n: {episode}" f"{TEXT_COLOR_DEFAULT}")
+            # compute the federated model 
+            getFederatedModel(folder_tree['req_models_dir'], episode)
+            
+            # evaluate agent 
+            evalAgent(os.path.join(folder_tree['req_models_dir'], f'federated_model_episode_{episode}.zip'))
+            #evalAgent(os.path.join(folder_tree['req_models_dir'], f'federated_model_episode_{episode}.zip'))
+            print(f"{TEXT_COLOR_YELLOW}" f"[INFO] Completed training for episode n: {episode}" f"{TEXT_COLOR_DEFAULT}")
 
         print(f"{TEXT_COLOR_RED}" f"[INFO] {datetime.now()} Ending computation" f"{TEXT_COLOR_DEFAULT}")
 
@@ -84,11 +92,18 @@ async def worker(context: WorkContext, tasks: AsyncIterable[Task]):
 
         s = context.new_script(timeout=timedelta(minutes=conf_yapapi['timeout']))
         
+        # upload inputs
         s.upload_file(os.path.join(PROJECT_PATH, "client_stable_baselines3.py"), os.path.join(folder_tree['prov_src_dir'], "client_stable_baselines3.py"))              # upload client script
+        
+        if os.path.isfile(os.path.join(folder_tree['req_models_dir'], f'federated_model_episode_{episode-1}.zip')): # in case the federated model is available from the step before load it 
+            s.upload_file(os.path.join(folder_tree['req_models_dir'], f'federated_model_episode_{episode-1}.zip'), os.path.join(folder_tree['prov_in_dir'], 'federated_model.zip'))
+        
+        # start training
         s.run("/bin/sh", "-c", "python3 " + os.path.join(folder_tree['prov_src_dir'], "client_stable_baselines3.py"))               # run client computation        
+        
+        # download results 
         s.download_file(os.path.join(folder_tree['prov_out_dir'], "model_out.zip"), os.path.join(folder_tree['req_models_dir'], f'model_episode_{episode}_worker_{worker_id}.zip')) # dowload output
         s.download_file(os.path.join(folder_tree['prov_out_dir'], "tensorboard.zip"), os.path.join(folder_tree['req_logs_dir'], f'tensorboard_episode_{episode}_worker_{worker_id}.zip')) # dowload output
-        #s.run("/bin/bash", "-c", 'sleep 30') # sleeping simulates the computation
         yield s
         
         print(f"{TEXT_COLOR_RED}" f"[INFO] {datetime.now()} End task on {context.provider_name}" f"{TEXT_COLOR_DEFAULT}")

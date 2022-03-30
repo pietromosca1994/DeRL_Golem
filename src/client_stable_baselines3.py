@@ -14,7 +14,7 @@ policy='MlpPolicy'
 policy_kwargs = dict(activation_fn=th.nn.ReLU,
                      net_arch=[dict(pi=[32, 32], vf=[32, 32])])
 
-total_timesteps=1000000
+total_timesteps=5000
 
 INPUT_VOLUME='/golem/input/'
 OUTPUT_VOLUME='/golem/output/'
@@ -128,6 +128,13 @@ def save_model(model, path):
         print('[ERROR] Failed to save model')
     return None
 
+def load_model(path):
+    try:
+        model=PPO.load(path)
+    except:
+        print('[ERRROR] Failed to load model')
+    return model 
+        
 def remFolderContent(path):
     for root, dirs, files in os.walk(path):
         for f in files:
@@ -137,12 +144,14 @@ def remFolderContent(path):
 
 if __name__ == "__main__":
     # remove output folder content
-    remFolderContent(OUTPUT_VOLUME)
+    remFolderContent(OUTPUT_VOLUME) # remove content of output folder at the beginning of the computation  
 
+    if os.path.isfile(os.path.join(INPUT_VOLUME, 'federated_model.zip')):
+        model=load_model(os.path.join(INPUT_VOLUME, 'federated_model.zip'))
+    else:
+        model=init_model(policy, env)
     # get model configurations 
     #conf_model=conf_parser('./conf_model.json')
-
-    model=init_model(policy, env)
     #model=init_model(kwargs)
     model=train_model(model, total_timesteps)
     model=save_model(model, os.path.join(OUTPUT_VOLUME, 'model_out.zip'))
