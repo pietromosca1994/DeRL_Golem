@@ -1,6 +1,9 @@
 # DeRL - Decentalized Federated Reinforcement Learning with Golem
 Framework for Decentralized Deferated Reinforcement Learning using Golem Network
 
+## Decentralized Deferated Learning 
+![RL_training_worflow](https://github.com/pietromosca1994/DeRL_Golem/blob/main/references/RL_training_workflow.png)
+
 ## Golem
 Golem is a global, open-source, decentralized supercomputer that anyone can use. It is made up of the combined computing power of the users' machines, from PCs to entire data centers.To facilitate that exchange, Golem implements a decentralized marketplace where IT resources are rented out. The actors in this decentralized network can assume one of the two non-exclusive roles:  
 **Requestor**  
