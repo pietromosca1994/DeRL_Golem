@@ -1,4 +1,4 @@
-# DeRL - Decentalized Federated Reinforcement Learning with Golem
+# DeRL - Decentalized Federated Reinforcement Learning in Golem Network
 Framework for Decentralized Deferated Reinforcement Learning using Golem Network
 
 ## Decentralized Deferated Learning 
