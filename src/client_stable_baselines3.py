@@ -14,7 +14,7 @@ policy='MlpPolicy'
 policy_kwargs = dict(activation_fn=th.nn.ReLU,
                      net_arch=[dict(pi=[32, 32], vf=[32, 32])])
 
-total_timesteps=5000
+total_timesteps=10000
 
 INPUT_VOLUME='/golem/input/'
 OUTPUT_VOLUME='/golem/output/'

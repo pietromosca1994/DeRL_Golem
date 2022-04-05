@@ -4,8 +4,8 @@
     "app_key":          "ccd959c719e74cb88cc40061367a6061",
     "min_storage_gib":  2,
     "min_mem_gib":      2,
-    "max_workers":      4,
-    "episodes":         6,
+    "max_workers":      3,
+    "episodes":         8,
     "timeout":          120,
     "budget":           10
 }
