@@ -13,12 +13,13 @@ The Federated RL process is repeated an arbitrary M number of episodes.
 4. **Federated Learning**: the n trained RL Agents gathered by the Provider Orchestrator are combined used one of the available Federated Learning algorithms in order to create a Federated RL Agent.  
 
 ### Federated Learning 
+![RL_training_worflow](https://github.com/pietromosca1994/DeRL_Golem/blob/main/references/Federated_RL.png)  
 Multiple agents are combined together on the Provider Orchestrator node to create a Federated RL Agent.
 Each RL Agent during the training matured a unique way of interacting with the environment (policy) that translates directly in the RL Agent performance. It is possible to think at the behaviour of the agent as its unique DNA (ex. in case of PPO the Actor/Critic NN weights)
 Multiple methods are available to combine the RL Agents based on their DNA:  
 - **Average**: the Federated RL Agent's DNA is obtained as average of the trained RL Agents's DNA.  
 - **Weighted Average**: the Federated RL Agent's DNA is obtained as weighted average of the trained RL Agents's the DNA where the weights are the performance (ex. Mean Rewards) of the RL Agents. 
-- **Evolutionary**: the Federated RL Agent's DNA is obtained combining the trained RL Agents's the DNA using a Swarm Optimization Algorithm (ex. Differential Evolution)  
+- **Evolutionary**: the Federated RL Agent's DNA is obtained combining the trained RL Agents's the DNA using a Swarm Optimization Algorithm (ex. Differential Evolution). In this way some "mutations" are introduced in the Federated RL Agent's DNA in order to avoid the agent to converge to suboptimal policies. 
 
 ## Golem
 Golem is a global, open-source, decentralized supercomputer that anyone can use. It is made up of the combined computing power of the users' machines, from PCs to entire data centers.To facilitate that exchange, Golem implements a decentralized marketplace where IT resources are rented out. The actors in this decentralized network can assume one of the two non-exclusive roles:  
