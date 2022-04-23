@@ -11,6 +11,9 @@ The Federated RL process is repeated an arbitrary M number of episodes.
 2. **Agent Training**: the RL Agent is trained on each one of the Provider Nodes (Workers) in the Golem Network.  
 3. **Agent Gathering**: at the end of the training (after a selected number of interactions of the agent with the environment) the trained agent is sent by each of the Workers to the Provider Orchestrator together with a report of the training.  
 4. **Federated Learning**: the n trained RL Agents gathered by the Provider Orchestrator are combined used one of the available Federated Learning algorithms in order to create a Federated RL Agent.  
+![Alt Text](https://github.com/pietromosca1994/DeRL_Golem/blob/main/references/training.gif)  
+
+![RL_training_worflow](https://github.com/pietromosca1994/DeRL_Golem/blob/main/references/RL_training_workflow.png)  
 
 ### Federated Learning 
 ![RL_training_worflow](https://github.com/pietromosca1994/DeRL_Golem/blob/main/references/Federated_RL.png)  
