@@ -1,3 +1,4 @@
+from pathlib import Path
 from stable_baselines3 import PPO
 import torch as th
 from client_stable_baselines3 import init_model
@@ -5,46 +6,11 @@ import os
 import glob
 from zipfile import ZipFile
 from stable_baselines3.common.env_util import make_vec_env
+from tensorflow.python.summary.summary_iterator import summary_iterator
+import pandas as pd
+import re
 
 #reference https://stable-baselines3.readthedocs.io/en/master/guide/custom_policy.html
-
-# PATH_1='/home/pietro/repos/DeRL_Golem/src/training/2022-03-25T15_22/models/model_episode_1_worker_1.zip' 
-# PATH_2='/home/pietro/repos/DeRL_Golem/src/training/2022-03-25T15_22/models/model_episode_1_worker_2.zip'
-# PATH_3='/home/pietro/repos/DeRL_Golem/src/training/2022-03-25T15_22/models/model_episode_1_worker_3.zip'
-
-# model_list=[]
-# model_list.append(PPO.load(PATH_1))
-# model_list.append(PPO.load(PATH_2))
-# model_list.append(PPO.load(PATH_3))
-
-
-# federated_model=FederatedLearning(model_list)
-
-# # load model 
-# model_1=PPO.load(PATH_1)
-# parameters_1=model_1.get_parameters()
-# net_arch_1=model_1. policy.net_arch
-# policy_1=parameters_1['policy']
-# state_dict_1=model_1.policy.state_dict
-
-# model_2=PPO.load(PATH_2)
-# parameters_2=model_2.get_parameters()
-# net_arch_2=model_2.policy.net_arch
-# policy_2=parameters_2['policy']
-# state_dict_1=model_2.policy.state_dict()
-
-# policy_3=OrderedDict()
-# for key in policy_2.keys():
-#     policy_3[key]=th.add(policy_1[key], policy_2[key])
-
-# model_3=PPO.load(PATH_1)
-# parameters_3=parameters_1
-# parameters_3['policy']=policy_3
-# model_3.set_parameters(parameters_3, exact_match=False)
-
-# parameters_test=model_3.get_parameters()
-# print('done')
-
 
 def FederatedLearning(model_list):
     federated_policy=model_list[0].get_parameters()['policy']
@@ -105,19 +71,71 @@ def evalAgent(path):
         obs, rewards, dones, info = env.step(action)
         env.render()
 
+def tb2df(root_dir, sort_by=None):
+    """Convert local TensorBoard data into Pandas DataFrame.
+    
+    Function takes the root directory path and recursively parses
+    all events data.    
+    If the `sort_by` value is provided then it will use that column
+    to sort values; typically `wall_time` or `step`.
+    
+    *Note* that the whole data is converted into a DataFrame.
+    Depending on the data size this might take a while. If it takes
+    too long then narrow it to some sub-directories.
+    
+    Paramters:
+        root_dir: (str) path to root dir with tensorboard data.
+        sort_by: (optional str) column name to sort by.
+    
+    Returns:
+        pandas.DataFrame with [wall_time, name, step, value] columns.
+    
+    """
+    def convert_tfevent(filepath):
+        return pd.DataFrame([
+            parse_tfevent(e) for e in summary_iterator(filepath) if len(e.summary.value)
+        ])
+
+    def parse_tfevent(tfevent):
+        return dict(
+            wall_time=tfevent.wall_time,
+            name=tfevent.summary.value[0].tag,
+            step=tfevent.step,
+            value=float(tfevent.summary.value[0].simple_value),
+        )
+    
+    columns_order = ['wall_time', 'name', 'step', 'value']
+    
+    out = []
+    for (root, _, filenames) in os.walk(root_dir):
+        for filename in filenames:
+            if "events.out.tfevents" not in filename:
+                continue
+            file_full_path = os.path.join(root, filename)
+            out.append(convert_tfevent(file_full_path))
+
+    # Concatenate (and sort) all partial individual dataframes
+    all_df = pd.concat(out)[columns_order]
+    if sort_by is not None:
+        all_df = all_df.sort_values(sort_by)
+        
+    return all_df.reset_index(drop=True)
+
+def getTrainingReport(path):
+    dir_list=[f.path for f in os.scandir(path) if f.is_dir()]
+    
+    report=pd.DataFrame()
+    for dir in dir_list:
+        exp_report=tb2df(dir)
+        exp_name=os.path.basename(os.path.normpath(dir))
+        exp_report['episode']=int(re.findall(r'\d+', exp_name)[0])
+        exp_report['worker']=int(re.findall(r'\d+', exp_name)[1])
+        report=pd.concat([report, exp_report])  
+    return report
+
 if __name__ == "__main__":
+    PATH='/home/pietro/repos/DeRL_Golem/src/training/2022-03-30T14_55/logs/'
+    getTrainingReport(PATH)    
 
-    PATH_1='/home/pietro/repos/DeRL_Golem/src/training/2022-03-29T16_58/models/model_episode_1_worker_1.zip' 
-    PATH_2='/home/pietro/repos/DeRL_Golem/src/training/2022-03-29T16_58/models/model_episode_1_worker_2.zip'
-    PATH_3='/home/pietro/repos/DeRL_Golem/src/training/2022-03-29T16_58/models/model_episode_1_worker_3.zip'
-
-    model_list=[]
-    model_list.append(PPO.load(PATH_1))
-    model_list.append(PPO.load(PATH_2))
-    model_list.append(PPO.load(PATH_3))
-
-    federated_model=FederatedLearning(model_list)
-    #path='/home/pietro/repos/DeRL_Golem/src/training/2022-03-29T10_55/models'
-    #getFederatedModel(path, 1)
 
 

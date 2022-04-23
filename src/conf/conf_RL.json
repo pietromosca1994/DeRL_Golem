@@ -6,7 +6,7 @@
         "policy":               "MlpPolicy",
         "env":                  "CartPole-v1",
         "learning_rate":        3e-4,
-        "n_steps":              2048,
+        "n_steps":              128,
         "batch_size":           64,
         "n_epochs":             1,
         "gamma":                0.99,
@@ -28,7 +28,7 @@
         "_init_setup_model":    "True"
     },
     "training": {
-        "total_timesteps":      10000,
+        "total_timesteps":      50000,
         "callback":             "None",
         "log_interval":         1,
         "eval_env":             "None",

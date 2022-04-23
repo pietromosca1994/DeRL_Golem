@@ -71,7 +71,6 @@ async def main(conf_yapapi, conf_RL, folder_tree):
             getFederatedModel(folder_tree['req_models_dir'], episode)
             
             # evaluate agent 
-            evalAgent(os.path.join(folder_tree['req_models_dir'], f'federated_model_episode_{episode}.zip'))
             #evalAgent(os.path.join(folder_tree['req_models_dir'], f'federated_model_episode_{episode}.zip'))
             print(f"{TEXT_COLOR_YELLOW}" f"[INFO] Completed training for episode n: {episode}" f"{TEXT_COLOR_DEFAULT}")
 
