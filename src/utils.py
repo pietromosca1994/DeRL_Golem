@@ -1,4 +1,4 @@
-from pathlib import Path
+from turtle import end_fill
 from stable_baselines3 import PPO
 import torch as th
 from client_stable_baselines3 import init_model
@@ -9,10 +9,12 @@ from stable_baselines3.common.env_util import make_vec_env
 from tensorflow.python.summary.summary_iterator import summary_iterator
 import pandas as pd
 import re
+import numpy as np
+import seaborn as sns
 
 #reference https://stable-baselines3.readthedocs.io/en/master/guide/custom_policy.html
 
-def FederatedLearning(model_list):
+def AverageFederatedLearning(model_list):
     federated_policy=model_list[0].get_parameters()['policy']
 
     # get the federated model policy as 
@@ -31,31 +33,49 @@ def FederatedLearning(model_list):
 
     return federated_model
 
-
-def plotTensorboard(path, episode):
-    if episode > 0:
-        dir_list=glob.glob(os.path.join(path, f'*episode_{episode}_*.zip'))
-    else:
-        dir_list=glob.glob(os.path.join(path, '*episode_*.zip'))
-
-    cmd='tensorboard --logdir ' + path
-    if len(dir_list)==0:
-        print('[INFO] No Tensorboard logs found')
-    else:
-        for zip_file in dir_list:
-            with ZipFile(zip_file, 'r') as f:
-                f.extractall(zip_file.strip('.zip'))
-                print(f'[INFO] Extracted {zip_file}')
-        os.system(cmd)
+def WeightedAverageFederatedLearning(model_list, report):
     return None
 
-def getFederatedModel(path, episode):
-    dir_list=glob.glob(os.path.join(path, f'*episode_{episode}_*.zip'))
+def EvolutionFederatedLearning(model_list, report):
+    return None
+
+
+def extractZip(path):
+    zip_list=glob.glob(os.path.join(path, '*.zip'))
+    if len(zip_list)==0:
+        print('[INFO] No zip files found')
+    else:
+        for zip_file in zip_list:
+            if not(os.path.isdir(zip_file.strip('.zip'))):
+                with ZipFile(zip_file, 'r') as f:
+                    f.extractall(zip_file.strip('.zip'))
+                    # print(f'[INFO] Extracted {zip_file}')
+    return None
+
+def plotTensorboard(path, episode=0):
+    extractZip(path)
+    cmd='tensorboard --logdir ' + path
+    os.system(cmd)
+    return None
+
+def getFederatedModel(folder_tree, episode, method):
+    dir_list=glob.glob(os.path.join(folder_tree['req_models_dir'], f'*episode_{episode}_*.zip'))
     model_list=[]
     for model_zip in dir_list:
         model_list.append(PPO.load(model_zip))
     
-    federated_model=FederatedLearning(model_list)
+    # get the report
+    report=getTrainingReport(folder_tree['req_logs_dir'], episode)
+
+    # compute the federated model
+    if method=='average':
+        federated_model=AverageFederatedLearning(model_list)
+    elif method=='weighted-average':
+        federated_model=WeightedAverageFederatedLearning(model_list, report)
+    else:
+        federated_model=EvolutionFederatedLearning(model_list, report)
+        
+    # save the federated model
     federated_model.save(os.path.join(path, f'federated_model_episode_{episode}'), include=['env'])
 
     return federated_model
@@ -70,6 +90,7 @@ def evalAgent(path):
         action, _states = model.predict(obs)
         obs, rewards, dones, info = env.step(action)
         env.render()
+    return None
 
 def tb2df(root_dir, sort_by=None):
     """Convert local TensorBoard data into Pandas DataFrame.
@@ -116,12 +137,24 @@ def tb2df(root_dir, sort_by=None):
 
     # Concatenate (and sort) all partial individual dataframes
     all_df = pd.concat(out)[columns_order]
-    if sort_by is not None:
-        all_df = all_df.sort_values(sort_by)
-        
-    return all_df.reset_index(drop=True)
+    
+    # make name in columns
+    report=pd.DataFrame()
+    report['step']=all_df['step'].unique()
+    for name in all_df['name'].unique():
+        try:
+            report[name]=all_df[all_df['name']==name]['value'].values
+        except:
+            report[name]=np.insert(all_df[all_df['name']==name]['value'].values, 0, 'NaN')
 
-def getTrainingReport(path):
+
+    if sort_by is not None:
+        report = report.sort_values(sort_by)
+        
+    return report.reset_index(drop=True)
+
+def getTrainingReport(path, episode=None):
+    extractZip(path)
     dir_list=[f.path for f in os.scandir(path) if f.is_dir()]
     
     report=pd.DataFrame()
@@ -131,11 +164,24 @@ def getTrainingReport(path):
         exp_report['episode']=int(re.findall(r'\d+', exp_name)[0])
         exp_report['worker']=int(re.findall(r'\d+', exp_name)[1])
         report=pd.concat([report, exp_report])  
+
+    report.reset_index(inplace=True)   
+    
+    if episode is None:
+        report=report[report['episode']==episode]
+
     return report
+
+def plotTrainingReport(path):
+    report=getTrainingReport(path)
+    report['episode'] = report['episode'].astype('category')
+    sns.lineplot(data=report.sort_values('episode'), x="step", y="rollout/ep_rew_mean", hue='episode', palette="husl", markers=True)  
+    return None
 
 if __name__ == "__main__":
     PATH='/home/pietro/repos/DeRL_Golem/src/training/2022-03-30T14_55/logs/'
-    getTrainingReport(PATH)    
+    plotTrainingReport(PATH)   
+
 
 
 

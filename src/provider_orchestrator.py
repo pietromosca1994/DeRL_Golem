@@ -33,7 +33,7 @@ TEXT_COLOR_DEFAULT =    "\033[0m"
 # yapapi parameters
 PROJECT_PATH=os.path.join('/home/pietro/repos/DeRL_Golem/src/')
 
-async def main(conf_yapapi, conf_RL, folder_tree):
+async def main(conf_yapapi, conf_RL, folder_tree): # conf_RL is prepared but not used 
     package = await vm.repo(
         image_hash=conf_yapapi['image_hash'],
         min_mem_gib=conf_yapapi['min_mem_gib'],
@@ -68,7 +68,7 @@ async def main(conf_yapapi, conf_RL, folder_tree):
             
             print(f"{TEXT_COLOR_CYAN}" f"[INFO] Generating Federated Agent for episode n: {episode}" f"{TEXT_COLOR_DEFAULT}")
             # compute the federated model 
-            getFederatedModel(folder_tree['req_models_dir'], episode)
+            getFederatedModel(folder_tree, episode)
             
             # evaluate agent 
             #evalAgent(os.path.join(folder_tree['req_models_dir'], f'federated_model_episode_{episode}.zip'))
