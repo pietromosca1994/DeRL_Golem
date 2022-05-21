@@ -18,10 +18,13 @@ def makeOutFolder(path):
                     "prov_out_dir":     os.path.join("/golem/output/"),                                 # provider output directory
                     "prov_src_dir":     os.path.join("/golem/src/")}                                    # provider source directory   
 
-    # create folder 
-    os.makedirs(folder_tree["req_logs_dir"], exist_ok=True)
-    os.makedirs(folder_tree["req_models_dir"], exist_ok=True)
-    os.makedirs(folder_tree["req_conf_dir"], exist_ok=True)
+    # create folder
+    try:
+        os.makedirs(folder_tree["req_logs_dir"], exist_ok=False)
+        os.makedirs(folder_tree["req_models_dir"], exist_ok=False)
+        os.makedirs(folder_tree["req_conf_dir"], exist_ok=False)
+    except:
+        None
 
     copy_tree(os.path.join(path, 'conf'), folder_tree['req_conf_dir'])     
     

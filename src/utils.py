@@ -11,20 +11,21 @@ import pandas as pd
 import re
 import numpy as np
 import seaborn as sns
+import matplotlib.pyplot as plt
 
 #reference https://stable-baselines3.readthedocs.io/en/master/guide/custom_policy.html
 
 def AverageFederatedLearning(model_list):
-    federated_policy=model_list[0].get_parameters()['policy']
 
-    # get the federated model policy as 
+    # get the federated model policy as average
+    federated_policy=model_list[0].get_parameters()['policy']
     for i in range(1, len(model_list)):
         for key in federated_policy.keys():
             federated_policy[key]=th.add(th.div(federated_policy[key], 2), 
                                         th.div(model_list[i].get_parameters()['policy'][key], 2))
     
     # model initialization
-    federated_model=init_model(policy='MlpPolicy', env=make_vec_env('LunarLander-v2', n_envs=1))
+    federated_model=init_model(policy='MlpPolicy', env=make_vec_env('LunarLander-v2', n_envs=1)) #  to be changed with Json config (MlpPolicy)
     federated_parameters=federated_model.get_parameters()
 
     # substitute federated parameters
@@ -34,7 +35,28 @@ def AverageFederatedLearning(model_list):
     return federated_model
 
 def WeightedAverageFederatedLearning(model_list, report):
-    return None
+    # compute weights for the weighted average
+    ep_rew=report[report['step']==max(report['step'])]['rollout/ep_rew_mean'].values
+    weights=ep_rew/sum(ep_rew)
+
+    # get the federated model policy as average
+    federated_policy=model_list[0].get_parameters()['policy']
+    for key in federated_policy.keys():
+        federated_policy[key]=th.mul(federated_policy[key], weights[0])
+
+    for i in range(1, len(model_list)):
+        for key in federated_policy.keys():
+            federated_policy[key]=th.add(federated_policy[key], th.mul(model_list[i].get_parameters()['policy'][key], weights[i]))
+    
+    # model initialization
+    federated_model=init_model(policy='MlpPolicy', env=make_vec_env('LunarLander-v2', n_envs=1)) #  to be changed with Json config (MlpPolicy)
+    federated_parameters=federated_model.get_parameters()
+
+    # substitute federated parameters
+    federated_parameters['policy']=federated_policy
+    federated_model.set_parameters(federated_parameters)
+
+    return federated_model
 
 def EvolutionFederatedLearning(model_list, report):
     return None
@@ -52,7 +74,7 @@ def extractZip(path):
                     # print(f'[INFO] Extracted {zip_file}')
     return None
 
-def plotTensorboard(path, episode=0):
+def plotTensorboard(path):
     extractZip(path)
     cmd='tensorboard --logdir ' + path
     os.system(cmd)
@@ -76,7 +98,7 @@ def getFederatedModel(folder_tree, episode, method):
         federated_model=EvolutionFederatedLearning(model_list, report)
         
     # save the federated model
-    federated_model.save(os.path.join(path, f'federated_model_episode_{episode}'), include=['env'])
+    federated_model.save(os.path.join(folder_tree['req_models_dir'], f'federated_model_episode_{episode}'), include=['env'])
 
     return federated_model
     
@@ -93,25 +115,7 @@ def evalAgent(path):
     return None
 
 def tb2df(root_dir, sort_by=None):
-    """Convert local TensorBoard data into Pandas DataFrame.
-    
-    Function takes the root directory path and recursively parses
-    all events data.    
-    If the `sort_by` value is provided then it will use that column
-    to sort values; typically `wall_time` or `step`.
-    
-    *Note* that the whole data is converted into a DataFrame.
-    Depending on the data size this might take a while. If it takes
-    too long then narrow it to some sub-directories.
-    
-    Paramters:
-        root_dir: (str) path to root dir with tensorboard data.
-        sort_by: (optional str) column name to sort by.
-    
-    Returns:
-        pandas.DataFrame with [wall_time, name, step, value] columns.
-    
-    """
+
     def convert_tfevent(filepath):
         return pd.DataFrame([
             parse_tfevent(e) for e in summary_iterator(filepath) if len(e.summary.value)
@@ -167,7 +171,7 @@ def getTrainingReport(path, episode=None):
 
     report.reset_index(inplace=True)   
     
-    if episode is None:
+    if episode is not None:
         report=report[report['episode']==episode]
 
     return report
@@ -176,10 +180,18 @@ def plotTrainingReport(path):
     report=getTrainingReport(path)
     report['episode'] = report['episode'].astype('category')
     sns.lineplot(data=report.sort_values('episode'), x="step", y="rollout/ep_rew_mean", hue='episode', palette="husl", markers=True)  
-    return None
+    plt.show()
+    return plt
 
 if __name__ == "__main__":
-    PATH='/home/pietro/repos/DeRL_Golem/src/training/2022-03-30T14_55/logs/'
+    from provider import load_conf, makeOutFolder
+
+    PATH='/home/pietro/repos/DeRL_Golem/src/training/2022-03-30T14_55/'
+    PROJECT_PATH=os.path.join('/home/pietro/repos/DeRL_Golem/src/')
+
+    folder_tree=makeOutFolder(PROJECT_PATH)
+    getFederatedModel(folder_tree, 1, 'weighted-average')
+
     plotTrainingReport(PATH)   
 
 

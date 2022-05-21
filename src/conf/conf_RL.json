@@ -37,5 +37,8 @@
         "tb_log_name":          "PPO",
         "eval_log_path":        "None",
         "reset_num_timesteps":  "True"
+    },
+    "federatedRL":{
+        "method":               "weighted-average"
     }
 }

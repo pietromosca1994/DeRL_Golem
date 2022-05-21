@@ -68,7 +68,7 @@ async def main(conf_yapapi, conf_RL, folder_tree): # conf_RL is prepared but not
             
             print(f"{TEXT_COLOR_CYAN}" f"[INFO] Generating Federated Agent for episode n: {episode}" f"{TEXT_COLOR_DEFAULT}")
             # compute the federated model 
-            getFederatedModel(folder_tree, episode, 'average') # make a configuration in json to read the method
+            getFederatedModel(folder_tree, episode, conf_RL['federatedRL']['method']) # make a configuration in json to read the method
             
             # evaluate agent 
             #evalAgent(os.path.join(folder_tree['req_models_dir'], f'federated_model_episode_{episode}.zip'))
